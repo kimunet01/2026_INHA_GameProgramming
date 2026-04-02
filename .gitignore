@@ -1,51 +1,75 @@
-# Prerequisites
-*.d
-
-# Compiled Object files
-*.slo
-*.lo
-*.o
-*.obj
-
-# Precompiled Headers
-*.gch
-*.pch
-
-# Compiled Dynamic libraries
-*.so
-*.dylib
-*.dll
-
-# Fortran module files
-*.mod
-*.smod
-
-# Compiled Static libraries
-*.lai
-*.la
-*.a
-*.lib
-
-# Executables
-*.exe
-*.out
-*.app
-
+# Visual Studio temporary files
 .vs/
-[Dd]ebug/
-[Rr]elease/
+*.VC.db
+*.VC.VC.opendb
+
+# Build results
+Debug/
+Release/
 x64/
 x86/
+[Bb]in/
+[Oo]bj/
+
+# CMake (혹시 쓴다면)
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+Makefile
+
+# Visual Studio files
 *.suo
 *.user
+*.userosscache
 *.sln.docstates
-*.VC.db
-*.ipch/
-*.db
-*.sqlite
-*.wsuo
 
-ipch/
-Build/
-bin/
-obj/
+# IntelliSense
+*.ipch
+*.aps
+*.ncb
+*.opensdf
+*.sdf
+
+# Logs
+*.log
+
+# Compiled files
+*.obj
+*.o
+*.pch
+*.pdb
+*.ilk
+*.idb
+*.tlog
+
+# Executables / Libraries
+*.exe
+*.dll
+*.lib
+*.exp
+
+# DirectX / Graphics temp
+*.fxc
+*.compiled
+
+# Windows image file caches
+Thumbs.db
+ehthumbs.db
+
+# OS files
+.DS_Store
+
+# Backup files
+*.bak
+*.tmp
+*.temp
+
+# NuGet (쓰면)
+packages/
+*.nupkg
+
+# Shader cache (있으면)
+*.cso
+
+# Personal settings
+*.vcxproj.user

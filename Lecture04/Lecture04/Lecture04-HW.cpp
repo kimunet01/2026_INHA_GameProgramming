@@ -70,18 +70,15 @@ public:
         D3DCompile(shaderSource, strlen(shaderSource), nullptr, nullptr, nullptr, "VS", "vs_4_0", 0, 0, &vsBlob, nullptr);
         D3DCompile(shaderSource, strlen(shaderSource), nullptr, nullptr, nullptr, "PS", "ps_4_0", 0, 0, &psBlob, nullptr);
 
-        ID3D11VertexShader* vShader;
-        ID3D11PixelShader* pShader;
-        g_pd3dDevice->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), nullptr, &vShader);
-        g_pd3dDevice->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, &pShader);
+        g_pd3dDevice->CreateVertexShader(vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), nullptr, &pVertexShader);
+        g_pd3dDevice->CreatePixelShader(psBlob->GetBufferPointer(), psBlob->GetBufferSize(), nullptr, &pPixelShader);
 
         D3D11_INPUT_ELEMENT_DESC layout[] = {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
             { "COLOR", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         };
 
-        ID3D11InputLayout* pInputLayout;
-        g_pd3dDevice->CreateInputLayout(layout, 2, vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &pInputLayout);
+        g_pd3dDevice->CreateInputLayout(layout, 2, vsBlob->GetBufferPointer(), vsBlob->GetBufferSize(), &pVertexLayout);
         vsBlob->Release(); psBlob->Release();
     }
     ~DirectSet() {
@@ -151,39 +148,59 @@ public:
         speed = 0.0003f;
         isUp = isDown = isLeft = isRight = 0;
 
-        D3D11_BUFFER_DESC bd = { sizeof(vertices), D3D11_USAGE_DEFAULT, D3D11_BIND_VERTEX_BUFFER, 0, 0, 0 };
-        D3D11_SUBRESOURCE_DATA initData = { &vertices, 0, 0 };
+        D3D11_BUFFER_DESC bd = { sizeof(Vertex) * (UINT)vertices.size(), D3D11_USAGE_DEFAULT, D3D11_BIND_VERTEX_BUFFER, 0, 0, 0};
+        D3D11_SUBRESOURCE_DATA initData = { &vertices[0], 0, 0};
         cdx->g_pd3dDevice->CreateBuffer(&bd, &initData, &pVertexBuffer);
     }
 
     void Input() override {
-        if (GetAsyncKeyState('W') & 0x8000) isUp = 1;
-        if (GetAsyncKeyState('S') & 0x8000) isDown = 1;
-        if (GetAsyncKeyState('A') & 0x8000) isLeft = 1;
-        if (GetAsyncKeyState('D') & 0x8000) isRight = 1;
+        isUp = (GetAsyncKeyState('W') & 0x8000);
+        isDown = (GetAsyncKeyState('S') & 0x8000);
+        isLeft = (GetAsyncKeyState('A') & 0x8000);
+        isRight = (GetAsyncKeyState('D') & 0x8000);
     }
 
     void Update(float dt) override {
         if (isUp) {
             for (int i = 0; i < 3; i++) {
-                vertices[i].y += 0.0003f * dt;
+                vertices[i].y += 1.0f * dt;
             }
         }
         if (isDown) {
             for (int i = 0; i < 3; i++) {
-                vertices[i].x += 0.0003f * dt;
+                vertices[i].y -= 1.0f * dt;
             }
         }
         if (isLeft) {
             for (int i = 0; i < 3; i++) {
-                vertices[i].x -= 0.0003f * dt;
+                vertices[i].x -= 1.0f * dt;
             }
         }
         if (isRight) {
             for (int i = 0; i < 3; i++) {
-                vertices[i].x += 0.0003f * dt;
+                vertices[i].x += 1.0f * dt;
             }
         }
+    }
+
+    void Render(DirectSet* cdx) {
+        cdx->g_pImmediateContext->UpdateSubresource(pVertexBuffer, 0, nullptr, &vertices[0], 0, 0);
+
+        cdx->g_pImmediateContext->IASetInputLayout(cdx->pVertexLayout);  // (Input Assembler) 데이터 판독기 장착
+        UINT stride = sizeof(Vertex), offset = 0; // stride : 간격 , offset : 시작점
+        cdx->g_pImmediateContext->IASetVertexBuffers(0, 1, &pVertexBuffer, &stride, &offset); // 정점 버퍼 올리기
+
+        // Primitive Topology 설정: 삼각형 리스트로 연결하라!
+        cdx->g_pImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST); // 토폴로지 설정
+        cdx->g_pImmediateContext->VSSetShader(cdx->pVertexShader, nullptr, 0); // Vertex shader 설정
+        cdx->g_pImmediateContext->PSSetShader(cdx->pPixelShader, nullptr, 0); // Pixel shader 설정
+
+        // 최종 그리기
+        cdx->g_pImmediateContext->Draw(3, 0);
+    }
+
+    ~L_Triangle() {
+        pVertexBuffer->Release();
     }
 };
 
@@ -204,43 +221,50 @@ public:
         speed = 0.0003f;
         isUp = isDown = isLeft = isRight = 0;
 
-        D3D11_BUFFER_DESC bd = { sizeof(vertices), D3D11_USAGE_DEFAULT, D3D11_BIND_VERTEX_BUFFER, 0, 0, 0 };
-        D3D11_SUBRESOURCE_DATA initData = { &vertices, 0, 0 };
+        D3D11_BUFFER_DESC bd = { sizeof(Vertex) * (UINT)vertices.size(), D3D11_USAGE_DEFAULT, D3D11_BIND_VERTEX_BUFFER, 0, 0, 0};
+        D3D11_SUBRESOURCE_DATA initData = { &vertices[0], 0, 0};
         cdx->g_pd3dDevice->CreateBuffer(&bd, &initData, &pVertexBuffer);
     }
 
     void Input() override {
+        isUp = (GetAsyncKeyState(VK_UP) & 0x8000);
+        isDown = (GetAsyncKeyState(VK_DOWN) & 0x8000);
+        isLeft = (GetAsyncKeyState(VK_LEFT) & 0x8000);
+        isRight = (GetAsyncKeyState(VK_RIGHT) & 0x8000);
+
+        /*
         if (GetAsyncKeyState(VK_UP) & 0x8000) isUp = 1;
         if (GetAsyncKeyState(VK_DOWN) & 0x8000) isDown = 1;
         if (GetAsyncKeyState(VK_LEFT) & 0x8000) isLeft = 1;
         if (GetAsyncKeyState(VK_RIGHT) & 0x8000) isRight = 1;
+        */
     }
 
     void Update(float dt) override {
         if (isUp) {
             for (int i = 0; i < 3; i++) {
-                vertices[i].y += 0.0003f * dt;
+                vertices[i].y += 1.0f * dt;
             }
         }
         if (isDown) {
             for (int i = 0; i < 3; i++) {
-                vertices[i].x += 0.0003f * dt;
+                vertices[i].y -= 1.0f * dt;
             }
         }
         if (isLeft) {
             for (int i = 0; i < 3; i++) {
-                vertices[i].x -= 0.0003f * dt;
+                vertices[i].x -= 1.0f * dt;
             }
         }
         if (isRight) {
             for (int i = 0; i < 3; i++) {
-                vertices[i].x += 0.0003f * dt;
+                vertices[i].x += 1.0f * dt;
             }
         }
     }
 
     void Render(DirectSet* cdx) {
-        cdx->g_pImmediateContext->UpdateSubresource(pVertexBuffer, 0, nullptr, &vertices, 0, 0);
+        cdx->g_pImmediateContext->UpdateSubresource(pVertexBuffer, 0, nullptr, &vertices[0], 0, 0);
 
         cdx->g_pImmediateContext->IASetInputLayout(cdx->pVertexLayout);  // (Input Assembler) 데이터 판독기 장착
         UINT stride = sizeof(Vertex), offset = 0; // stride : 간격 , offset : 시작점
@@ -334,11 +358,16 @@ public:
                 DispatchMessage(&msg); // 위에서 만든 WndProc 함수로 메세지 전달
             }
             else {
+                std::chrono::high_resolution_clock::time_point currentTime = std::chrono::high_resolution_clock::now();
+                std::chrono::duration<float> elapsed = currentTime - prevTime;
+                deltaTime = elapsed.count();
+                prevTime = currentTime;
+
                 Input();
                 Update(cdx);
                 Render(cdx);
 
-//                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
         }
     }

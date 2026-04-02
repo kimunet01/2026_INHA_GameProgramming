@@ -73,3 +73,6 @@ packages/
 
 # Personal settings
 *.vcxproj.user
+
+*.hlsl~
+*.fx~

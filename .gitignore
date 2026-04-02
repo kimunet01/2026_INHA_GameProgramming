@@ -41,6 +41,9 @@ x86/
 *.sln.docstates
 *.VC.db
 *.ipch/
+*.db
+*.sqlite
+*.wsuo
 
 ipch/
 Build/
